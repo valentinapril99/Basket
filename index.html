@@ -58,9 +58,9 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .navbar{position:relative;width:100%;height:56px;display:flex;align-items:center;gap:8px;padding:8px 16px}
 .navbar .ttl{position:absolute;left:16.33%;right:16.33%;top:50%;transform:translateY(-50%);text-align:center;font-weight:600;font-size:16px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .navbar .sp{flex:1}
-.icon-btn{width:40px;height:40px;border-radius:12px;background:var(--sub-ground);display:flex;align-items:center;justify-content:center}
-.segmented{width:343px;background:var(--sub-ground);border-radius:12px;padding:4px;display:flex}
-.segmented button{flex:1;padding:8px;border-radius:12px;text-align:center;font-weight:500;font-size:14px;line-height:18px;color:var(--sub1);transition:background .15s,color .15s}
+.icon-btn{width:40px;height:40px;border-radius:16px;background:var(--sub-ground);display:flex;align-items:center;justify-content:center}
+.segmented{width:343px;background:var(--sub-ground);border-radius:20px;padding:4px;display:flex}
+.segmented button{flex:1;padding:8px;border-radius:16px;text-align:center;font-weight:500;font-size:14px;line-height:18px;color:var(--sub1);transition:background .15s,color .15s}
 .segmented button.on{background:var(--ground);color:var(--main-text);filter:drop-shadow(0 4px 3px rgba(0,0,0,.08)) drop-shadow(0 0 1px rgba(0,0,0,.04))}
 
 /* blocks */
@@ -71,11 +71,11 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .address .base{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap}
 .address .l1{font-size:14px;line-height:18px;color:var(--sub1);max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .address .l2{font-weight:500;font-size:16px;line-height:20px}
-.address .ctl{padding:10px;border-radius:12px}
-.soft{background:var(--sub-ground);border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;width:343px;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
+.address .ctl{padding:10px;border-radius:16px}
+.soft{background:var(--sub-ground);border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;width:343px;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
 .soft.sm{padding:10px;gap:6px;width:100%}
 .soft .right{flex:1;text-align:right;font-weight:400;opacity:.8}
-.primary{background:var(--primary);color:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;width:100%;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
+.primary{background:var(--primary);color:#fff;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;width:100%;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
 .primary .right{flex:1;text-align:right;font-weight:400}
 .primary.disabled{background:#F0F1F3;color:var(--sub3);cursor:default}
 .soft:active,.primary:not(.disabled):active,.icon-btn:active{filter:brightness(.96)}
@@ -213,16 +213,14 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .map{position:absolute;left:0;top:120px;width:375px;overflow:hidden;background:#EEF0E8}
 .map .mimg{position:absolute;background:center/cover no-repeat}
 /* interactive map (Leaflet) */
-.lmap{position:absolute;inset:0;z-index:0;background:#EEF0E8;font:inherit}
-.lmap .leaflet-control-attribution{font-size:9px;line-height:12px;background:rgba(255,255,255,.7);color:var(--sub2)}
-.lmap .leaflet-control-attribution a{color:var(--sub1)}
+.lmap{position:absolute;inset:0;z-index:0;background:#F2F1ED;font:inherit}
 .lpin{background:none;border:0}
 .lpin .pin,.lpin .storepin{position:absolute;left:0;top:0;width:max-content}
 .lpin .pin{transform:translate(calc(-100% + 24px),-100%)}
 .lpin .pin.chkpin{transform:translate(calc(-100% + 20px),-50%)}
 .lpin .storepin{transform:translate(-50%,-100%)}
 .zoom{position:absolute;display:flex;flex-direction:column;gap:8px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.08)) drop-shadow(0 0 1px rgba(0,0,0,.04));color:var(--sub1);z-index:3}
-.zoom button{width:40px;height:40px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center}
+.zoom button{width:40px;height:40px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center}
 .pin{position:absolute;display:flex;align-items:center;z-index:2}
 .pin .cb{margin-right:-12px;padding:8px 16px;border-radius:32px;background:#fff;font-weight:500;font-size:14px;line-height:18px;white-space:nowrap;filter:drop-shadow(0 2px 1.5px rgba(0,0,0,.08)) drop-shadow(0 0 1px rgba(0,0,0,.04))}
 .pin .cb.g{background:var(--primary);color:#fff}
@@ -242,7 +240,7 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .dprev .r>svg{width:20px;height:20px}
 .dprev .r .bl{display:flex;gap:4px;align-items:baseline}
 .dprev .r .bl small{font-weight:400;font-size:14px;line-height:18px;color:var(--sub1)}
-.obtn{width:343px;background:var(--sub-ground);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:flex-start;font-weight:500;font-size:16px;line-height:20px}
+.obtn{width:343px;background:var(--sub-ground);border-radius:16px;padding:16px;display:flex;gap:12px;align-items:flex-start;font-weight:500;font-size:16px;line-height:20px}
 .obtn span{width:279px}
 .friend{width:375px;background:#fff;border-radius:24px;padding:16px;display:flex;gap:8px;align-items:center}
 .friend .lb{flex:1;display:flex;align-items:center;font-weight:500;font-size:16px;line-height:20px}
@@ -253,7 +251,7 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .prow.bb{border-bottom:1px solid var(--border)}
 .prow .l{flex:1;min-width:0;display:flex;gap:12px;align-items:center;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
 .tag{background:#F7F7F7;border:1px solid #fff;border-radius:16px;padding:8px 12px 8px 8px;font-size:12px;line-height:14px;color:var(--sub1);white-space:nowrap}
-.ghost{width:32px;padding:7px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.ghost{width:32px;padding:7px;border-radius:16px;display:flex;align-items:center;justify-content:center}
 
 .fade-in{animation:fi .22s ease}
 @keyframes fi{from{opacity:.4}to{opacity:1}}
@@ -451,15 +449,18 @@ const pinImg = (x,y,t,green,act='') => `<button class="pin" style="left:${x}px;t
 const pinChk = (x,y,t,act='') => `<button class="pin" style="left:${x}px;top:${y}px" ${act?`data-act="${act}"`:''}><span class="cb">${t}</span><span class="chk">${ic('pinCheck')}</span></button>`;
 const storePin = (x,y) => `<div class="storepin" style="left:${x}px;top:${y}px"><div class="bx">${ic('pinStore')}</div><div class="st"></div></div>`;
 const mapTabs = `<div class="bottombar flat maptabs" style="top:727px;bottom:auto;border-radius:0 0 24px 24px">${tabs({active:'home',count:'13'})}</div>`;
-/* interactive map: real coordinates (Нижний Новгород, Молитовка) */
+/* interactive map: Нижний Новгород, Молитовка — Resurses/map.webp as the base layer,
+   coordinates are image pixels [y, x] (CRS.Simple, y grows downwards) */
+const MAP_IMG = 'Resurses/map.webp', MAP_SIZE = 814;
+const px = (x,y) => [MAP_SIZE - y, x];
 const HAS_LEAFLET = typeof window.L !== 'undefined';
 const STORES = [
-  {id:'rom', t:'ул. Романтиков, 8', s:'0,9 км – доставка c 9:00 до 10:00', cnt:'5 из 5', cls:'green', ll:[56.2953,43.9455], items:''},
-  {id:'tim', t:'ул. Тимирязево, 35', s:'Привезем сегодня c 21:00 до 22:00', cnt:'4 из 5', cls:'orange', ll:[56.2862,43.9585], items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')},
-  {id:'len', t:'ул. пр, Ленина, 65', s:'2,4 км – доставка c 10:00 до 11:00, стоимость может измениться', cnt:'3 из 5', cls:'orange', ll:[56.2898,43.9338], items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')+sitem('salami','Колбаса Салями Пряная сырокопчёная полусухая','400 из 600 г')},
-  {id:'van', t:'ул. Ванеева, 78', s:'6,3 км – доставка c 11:00 до 12:00, стоимость может измениться', cnt:'5 из 5', cls:'green', ll:[56.2815,43.9470], items:''},
+  {id:'rom', t:'ул. Романтиков, 8', s:'0,9 км – доставка c 9:00 до 10:00', cnt:'5 из 5', cls:'green', ll:px(480,340), items:''},
+  {id:'tim', t:'ул. Тимирязево, 35', s:'Привезем сегодня c 21:00 до 22:00', cnt:'4 из 5', cls:'orange', ll:px(505,585), items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')},
+  {id:'len', t:'ул. пр, Ленина, 65', s:'2,4 км – доставка c 10:00 до 11:00, стоимость может измениться', cnt:'3 из 5', cls:'orange', ll:px(300,380), items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')+sitem('salami','Колбаса Салями Пряная сырокопчёная полусухая','400 из 600 г')},
+  {id:'van', t:'ул. Ванеева, 78', s:'6,3 км – доставка c 11:00 до 12:00, стоимость может измениться', cnt:'5 из 5', cls:'green', ll:px(275,690), items:''},
 ];
-const CURRENT = {cnt:'4 из 5', ll:[56.2905,43.9520]};
+const CURRENT = {cnt:'4 из 5', ll:px(400,645)};
 let selectedStore = 'tim';
 const MAPS = {};
 const pinHtml = (st, sel) => sel
@@ -470,14 +471,13 @@ function initMap(screenId){
   if(!el) return;
   if(MAPS[screenId]){ MAPS[screenId].map.invalidateSize(); refreshMarkers(screenId); return; }
   const sheet = screenId!=='map';
-  const map = L.map(el, {zoomControl:false, attributionControl:true, zoomSnap:.5});
+  const bounds = [[0,0],[MAP_SIZE,MAP_SIZE]];
+  const map = L.map(el, {crs:L.CRS.Simple, zoomControl:false, attributionControl:false, zoomSnap:.25, maxBounds:bounds, maxBoundsViscosity:1});
+  L.imageOverlay(MAP_IMG, bounds).addTo(map);
+  // never zoom out past the point where the image stops covering the map
+  map.setMinZoom(map.getBoundsZoom(bounds, true)); map.setMaxZoom(1.5);
   // pins hang left/up from their point, the top nav overlaps the map top
   map.fitBounds(L.latLngBounds([...STORES.map(x=>x.ll), CURRENT.ll]), {paddingTopLeft:[110, sheet?120:140], paddingBottomRight:[40, sheet?20:130]});
-  map.attributionControl.setPrefix(false).setPosition(sheet?'topright':'bottomleft');
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    subdomains:'abcd', maxZoom:19,
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
-  }).addTo(map);
   const cur = L.marker(CURRENT.ll, {icon:L.divIcon({className:'lpin', iconSize:[0,0], html:`<span class="pin chkpin"><span class="cb">${CURRENT.cnt}</span><span class="chk">${ic('pinCheck')}</span></span>`}), zIndexOffset:500}).addTo(map);
   cur.on('click', ()=>go('mapCurrent'));
   const markers = STORES.map(st=>{
