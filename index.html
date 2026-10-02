@@ -253,6 +253,22 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .tag{background:#F7F7F7;border:1px solid #fff;border-radius:16px;padding:8px 12px 8px 8px;font-size:12px;line-height:14px;color:var(--sub1);white-space:nowrap}
 .ghost{width:32px;padding:7px;border-radius:16px;display:flex;align-items:center;justify-content:center}
 
+/* finish */
+.finish>*{width:343px}
+.fhead{display:flex;flex-direction:column;align-items:center;gap:24px;padding:0 16px 16px}
+.fhead .bag{width:139px;height:136px;border-radius:16px;background:center/cover no-repeat;position:relative;overflow:hidden}
+.fhead .bag::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,0) 77.9%,#fff)}
+.ftxt{display:flex;flex-direction:column;gap:8px;text-align:center}
+.ftxt h1{font-weight:600;font-size:20px;line-height:24px}
+.ftxt p{font-size:16px;line-height:20px;color:var(--sub1)}
+.neworder{background:var(--sub-ground);border-radius:24px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:24px}
+.ntxt{display:flex;flex-direction:column;gap:4px;text-align:center}
+.ntxt b{font-weight:600;font-size:18px;line-height:22px}
+.ntxt span{font-size:14px;line-height:18px}
+.nimg{width:70px;height:70px;border-radius:8px;background:center/cover no-repeat}
+.nbox{width:100%;display:flex;flex-direction:column;gap:16px}
+.nbox p{font-weight:600;font-size:10px;line-height:12px;color:var(--sub1);text-align:center}
+
 .fade-in{animation:fi .22s ease}
 @keyframes fi{from{opacity:.4}to{opacity:1}}
 @media (max-width:500px){
@@ -397,11 +413,12 @@ function cartScreen(state){
       <div class="thumbs"><div class="thumb" ${bg('burger')}></div></div>
       <button class="soft" data-act="stores">${ic('storeBtn')}<span>Выбрать магазин</span></button>
     </div>`;
-    rest = `${separator}
+    // after the store change everything ships together — nothing is left in the cart
+    rest = state==='C' ? totals(true) : `${separator}
       <div class="block" style="align-items:center">${headline('preorder','Доставка 25 апреля','Привезем c 09:00 до 10:00','1  шт')}
-        ${state==='B'?productCard({...P.burger, faded:true}):''}
+        ${productCard({...P.burger, faded:true})}
         ${changeDate('25 апреля')}</div>
-      ${totals(state==='C')}`;
+      ${totals(false)}`;
   }
   const snackText = state==='B'?'Дата изменена на 24 апреля':state==='C'?'Магазин изменен':'';
   return `<div class="scroll"><div class="stack" style="padding:100px 0 181px">${bsBlock}${main}${service}${rest}</div></div>
@@ -455,12 +472,12 @@ const MAP_IMG = 'Resurses/map.webp', MAP_SIZE = 814;
 const px = (x,y) => [MAP_SIZE - y, x];
 const HAS_LEAFLET = typeof window.L !== 'undefined';
 const STORES = [
-  {id:'rom', t:'ул. Романтиков, 8', s:'0,9 км – доставка c 9:00 до 10:00', cnt:'5 из 5', cls:'green', ll:px(480,340), items:''},
-  {id:'tim', t:'ул. Тимирязево, 35', s:'Привезем сегодня c 21:00 до 22:00', cnt:'4 из 5', cls:'orange', ll:px(505,585), items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')},
+  {id:'rom', t:'ул. Романтиков, 8', s:'0,9 км – доставка c 9:00 до 10:00', cnt:'5 из 5', cls:'green', ll:px(340,295), onMap:true, items:''},
+  {id:'tim', t:'ул. Тимирязево, 35', s:'Привезем сегодня c 21:00 до 22:00', cnt:'4 из 5', cls:'orange', ll:px(300,640), onMap:true, items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')},
   {id:'len', t:'ул. пр, Ленина, 65', s:'2,4 км – доставка c 10:00 до 11:00, стоимость может измениться', cnt:'3 из 5', cls:'orange', ll:px(300,380), items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')+sitem('salami','Колбаса Салями Пряная сырокопчёная полусухая','400 из 600 г')},
   {id:'van', t:'ул. Ванеева, 78', s:'6,3 км – доставка c 11:00 до 12:00, стоимость может измениться', cnt:'5 из 5', cls:'green', ll:px(275,690), items:''},
 ];
-const CURRENT = {cnt:'4 из 5', ll:px(400,645)};
+const CURRENT = {cnt:'4 из 5', ll:px(500,462)};
 let selectedStore = 'tim';
 const MAPS = {};
 const pinHtml = (st, sel) => sel
@@ -472,12 +489,14 @@ function initMap(screenId){
   if(MAPS[screenId]){ MAPS[screenId].map.invalidateSize(); refreshMarkers(screenId); return; }
   const sheet = screenId!=='map';
   const bounds = [[0,0],[MAP_SIZE,MAP_SIZE]];
-  const map = L.map(el, {crs:L.CRS.Simple, zoomControl:false, attributionControl:false, zoomSnap:.25, maxBounds:bounds, maxBoundsViscosity:1});
+  // the full map runs under the tab bar, so let the image end above the screen bottom
+  const pan = sheet ? bounds : [[-100,0],[MAP_SIZE,MAP_SIZE]];
+  const map = L.map(el, {crs:L.CRS.Simple, minZoom:-3, zoomControl:false, attributionControl:false, zoomSnap:.25, maxBounds:pan, maxBoundsViscosity:1});
   L.imageOverlay(MAP_IMG, bounds).addTo(map);
   // never zoom out past the point where the image stops covering the map
   map.setMinZoom(map.getBoundsZoom(bounds, true)); map.setMaxZoom(1.5);
-  // pins hang left/up from their point, the top nav overlaps the map top
-  map.fitBounds(L.latLngBounds([...STORES.map(x=>x.ll), CURRENT.ll]), {paddingTopLeft:[110, sheet?120:140], paddingBottomRight:[40, sheet?20:130]});
+  // same framing as the Figma frames: 1:1 on the full map, 1:2 above the sheet
+  map.setView(sheet?px(405,425):px(380,524), sheet?-1:0, {animate:false});
   const cur = L.marker(CURRENT.ll, {icon:L.divIcon({className:'lpin', iconSize:[0,0], html:`<span class="pin chkpin"><span class="cb">${CURRENT.cnt}</span><span class="chk">${ic('pinCheck')}</span></span>`}), zIndexOffset:500}).addTo(map);
   cur.on('click', ()=>go('mapCurrent'));
   const markers = STORES.map(st=>{
@@ -492,6 +511,8 @@ function refreshMarkers(screenId){
   const sel = screenId==='mapSelect' ? selectedStore : null;
   MAPS[screenId].markers.forEach(([st,m])=>{
     m.setIcon(L.divIcon({className:'lpin', iconSize:[0,0], html:pinHtml(st, st.id===sel)}));
+    // the design shows only some stores on the map; one picked from the list appears too
+    if(st.onMap || st.id===sel) m.addTo(MAPS[screenId].map); else m.remove();
     m.setZIndexOffset(st.id===sel?1000:0);
   });
   const st = STORES.find(x=>x.id===(screenId==='mapCurrent'?'tim':selectedStore));
@@ -504,7 +525,7 @@ function refreshMarkers(screenId){
     sh.querySelector('[data-items]').innerHTML = items;
     sh.querySelector('.banner').hidden = !items;
   }
-  if(sel){ MAPS[screenId].map.panTo(st.ll, {animate:true}); }
+  if(sel && !MAPS[screenId].map.getBounds().contains(st.ll)){ MAPS[screenId].map.panTo(st.ll, {animate:true}); }
 }
 const lmapZoom = (l,t) => `<div class="zoom" style="left:${l}px;top:${t}px"><button aria-label="Приблизить" data-zoom="1">${ic('plus20')}</button><button aria-label="Отдалить" data-zoom="-1">${ic('minus20')}</button></div>`;
 function mapScreen(){
@@ -576,7 +597,27 @@ function checkoutScreen(){
     </div>
   </div></div>
   ${topnav({title:'Оформление', round:true, pb:8, back:'back-from-checkout'})}
-  <div class="bottombar"><div class="btnpanel"><button class="primary">Оформить заказ</button></div>${tabs({})}</div>`;
+  <div class="bottombar"><div class="btnpanel"><button class="primary" data-act="finish">Оформить заказ</button></div>${tabs({})}</div>`;
+}
+
+/* ---------- FINISH ---------- */
+IMG.bag = 'Resurses/image%20113.png';
+function finishScreen(){
+  return `<div class="scroll"><div class="stack finish" style="padding:84px 16px 64px;gap:24px">
+    <div class="fhead">
+      <div class="bag" ${bg('bag')}></div>
+      <div class="ftxt"><h1>Ваш заказ №46295 принят</h1><p>Мы пришлем уведомление после сборки заказа. Вы можете оформить дозаказ до начала поиска курьера.</p></div>
+    </div>
+    <button class="soft" style="width:100%" data-act="noop">Перейти к заказу</button>
+    <div class="neworder">
+      <div class="ntxt"><b>В корзине остались товары</b><span>1 товар на 25 апреля. Настройки корзины изменятся на предзаказ.</span></div>
+      <div class="nimg" ${bg('cake')}></div>
+      <div class="nbox"><button class="primary" style="height:48px" data-act="checkout">Оформить предзаказ</button>
+        <p>Товары привезут отдельно. Акции и бонусы не суммируются с основным заказом. Доставка оплачивается отдельно</p></div>
+    </div>
+  </div></div>
+  <div class="topnav">${statusbar('9:41')}</div>
+  <div class="homeind" style="position:absolute;left:0;right:0;bottom:0;z-index:20"><i></i></div>`;
 }
 
 /* ---------- router ---------- */
@@ -590,9 +631,10 @@ const SCREENS = [
   ['mapSelect','Карта — выбор магазина', ()=>mapSheet(true)],
   ['cartC','Корзина — магазин изменён', ()=>cartScreen('C')],
   ['checkout','Оформление', checkoutScreen],
+  ['finish','Заказ принят', finishScreen],
 ];
 const phone = document.getElementById('phone');
-SCREENS.forEach(([id,,fn])=>{const d=document.createElement('section');d.className='screen'+(id.startsWith('map')?' white':'');d.id='s-'+id;d.innerHTML=fn();phone.appendChild(d);});
+SCREENS.forEach(([id,,fn])=>{const d=document.createElement('section');d.className='screen'+(id.startsWith('map')||id==='finish'?' white':'');d.id='s-'+id;d.innerHTML=fn();phone.appendChild(d);});
 let current='cartA', lastCart='cartA', snackTimer;
 function go(id, {snack=false}={}){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id==='s-'+id));
@@ -610,7 +652,7 @@ const ACT = {
   'settings':()=>go('settings'), 'cart':()=>go(lastCart), 'apply-date':()=>go('cartB',{snack:true}),
   'revert':()=>go('cartA'), 'undo-B':()=>go('cartA'), 'undo-C':()=>go('cartB'),
   'stores':()=>go('stores'), 'map':()=>go('map'), 'map-current':()=>go('mapCurrent'), 'map-select':(a)=>{if(a&&a.dataset.store)selectedStore=a.dataset.store;go('mapSelect');},
-  'apply-store':()=>go('cartC',{snack:true}), 'checkout':()=>go('checkout'), 'back-from-checkout':()=>go(lastCart), 'noop':()=>{}
+  'apply-store':()=>go('cartC',{snack:true}), 'checkout':()=>go('checkout'), 'back-from-checkout':()=>go(lastCart), 'finish':()=>go('finish'), 'noop':()=>{}
 };
 phone.addEventListener('click',e=>{
   const z=e.target.closest('[data-zoom]'); if(z){const m=MAPS[current]; if(m) +z.dataset.zoom>0?m.map.zoomIn():m.map.zoomOut(); return;}
