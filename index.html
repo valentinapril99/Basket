@@ -1,7 +1,13 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Прототип корзины</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#FFFFFF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
   --main-text:#1E1E1E; --sub1:#4F4F4F; --sub2:#808080; --sub3:#BCBCBC;
@@ -31,7 +37,8 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 @media (max-width:760px){.nav-panel{display:none}}
 @media (max-width:500px){
   .stage{display:block}
-  .phone-wrap{width:100vw;height:100dvh;transform:none!important}
+  /* the 375px layout is scaled to the screen width in fit(); height follows the screen */
+  .phone-wrap{transform-origin:0 0;margin:0!important}
   .phone{width:100%;height:100%;border-radius:0;box-shadow:none}
 }
 
@@ -51,9 +58,9 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .navbar{position:relative;width:100%;height:56px;display:flex;align-items:center;gap:8px;padding:8px 16px}
 .navbar .ttl{position:absolute;left:16.33%;right:16.33%;top:50%;transform:translateY(-50%);text-align:center;font-weight:600;font-size:16px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .navbar .sp{flex:1}
-.icon-btn{width:40px;height:40px;border-radius:12px;background:var(--sub-ground);display:flex;align-items:center;justify-content:center}
-.segmented{width:343px;background:var(--sub-ground);border-radius:12px;padding:4px;display:flex}
-.segmented button{flex:1;padding:8px;border-radius:12px;text-align:center;font-weight:500;font-size:14px;line-height:18px;color:var(--sub1);transition:background .15s,color .15s}
+.icon-btn{width:40px;height:40px;border-radius:16px;background:var(--sub-ground);display:flex;align-items:center;justify-content:center}
+.segmented{width:343px;background:var(--sub-ground);border-radius:20px;padding:4px;display:flex}
+.segmented button{flex:1;padding:8px;border-radius:16px;text-align:center;font-weight:500;font-size:14px;line-height:18px;color:var(--sub1);transition:background .15s,color .15s}
 .segmented button.on{background:var(--ground);color:var(--main-text);filter:drop-shadow(0 4px 3px rgba(0,0,0,.08)) drop-shadow(0 0 1px rgba(0,0,0,.04))}
 
 /* blocks */
@@ -64,11 +71,11 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .address .base{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap}
 .address .l1{font-size:14px;line-height:18px;color:var(--sub1);max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .address .l2{font-weight:500;font-size:16px;line-height:20px}
-.address .ctl{padding:10px;border-radius:12px}
-.soft{background:var(--sub-ground);border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;width:343px;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
+.address .ctl{padding:10px;border-radius:16px}
+.soft{background:var(--sub-ground);border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;width:343px;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
 .soft.sm{padding:10px;gap:6px;width:100%}
 .soft .right{flex:1;text-align:right;font-weight:400;opacity:.8}
-.primary{background:var(--primary);color:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;width:100%;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
+.primary{background:var(--primary);color:#fff;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;width:100%;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
 .primary .right{flex:1;text-align:right;font-weight:400}
 .primary.disabled{background:#F0F1F3;color:var(--sub3);cursor:default}
 .soft:active,.primary:not(.disabled):active,.icon-btn:active{filter:brightness(.96)}
@@ -205,8 +212,15 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 /* map */
 .map{position:absolute;left:0;top:120px;width:375px;overflow:hidden;background:#EEF0E8}
 .map .mimg{position:absolute;background:center/cover no-repeat}
+/* interactive map (Leaflet) */
+.lmap{position:absolute;inset:0;z-index:0;background:#F2F1ED;font:inherit}
+.lpin{background:none;border:0}
+.lpin .pin,.lpin .storepin{position:absolute;left:0;top:0;width:max-content}
+.lpin .pin{transform:translate(calc(-100% + 24px),-100%)}
+.lpin .pin.chkpin{transform:translate(calc(-100% + 20px),-50%)}
+.lpin .storepin{transform:translate(-50%,-100%)}
 .zoom{position:absolute;display:flex;flex-direction:column;gap:8px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.08)) drop-shadow(0 0 1px rgba(0,0,0,.04));color:var(--sub1);z-index:3}
-.zoom button{width:40px;height:40px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center}
+.zoom button{width:40px;height:40px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center}
 .pin{position:absolute;display:flex;align-items:center;z-index:2}
 .pin .cb{margin-right:-12px;padding:8px 16px;border-radius:32px;background:#fff;font-weight:500;font-size:14px;line-height:18px;white-space:nowrap;filter:drop-shadow(0 2px 1.5px rgba(0,0,0,.08)) drop-shadow(0 0 1px rgba(0,0,0,.04))}
 .pin .cb.g{background:var(--primary);color:#fff}
@@ -226,7 +240,7 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .dprev .r>svg{width:20px;height:20px}
 .dprev .r .bl{display:flex;gap:4px;align-items:baseline}
 .dprev .r .bl small{font-weight:400;font-size:14px;line-height:18px;color:var(--sub1)}
-.obtn{width:343px;background:var(--sub-ground);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:flex-start;font-weight:500;font-size:16px;line-height:20px}
+.obtn{width:343px;background:var(--sub-ground);border-radius:16px;padding:16px;display:flex;gap:12px;align-items:flex-start;font-weight:500;font-size:16px;line-height:20px}
 .obtn span{width:279px}
 .friend{width:375px;background:#fff;border-radius:24px;padding:16px;display:flex;gap:8px;align-items:center}
 .friend .lb{flex:1;display:flex;align-items:center;font-weight:500;font-size:16px;line-height:20px}
@@ -237,10 +251,40 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .prow.bb{border-bottom:1px solid var(--border)}
 .prow .l{flex:1;min-width:0;display:flex;gap:12px;align-items:center;font-weight:500;font-size:16px;line-height:20px;white-space:nowrap}
 .tag{background:#F7F7F7;border:1px solid #fff;border-radius:16px;padding:8px 12px 8px 8px;font-size:12px;line-height:14px;color:var(--sub1);white-space:nowrap}
-.ghost{width:32px;padding:7px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.ghost{width:32px;padding:7px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+
+/* finish */
+.finish>*{width:343px}
+.fhead{display:flex;flex-direction:column;align-items:center;gap:24px;padding:0 16px 16px}
+.fhead .bag{width:139px;height:136px;border-radius:16px;background:center/cover no-repeat;position:relative;overflow:hidden}
+.fhead .bag::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,0) 77.9%,#fff)}
+.ftxt{display:flex;flex-direction:column;gap:8px;text-align:center}
+.ftxt h1{font-weight:600;font-size:20px;line-height:24px}
+.ftxt p{font-size:16px;line-height:20px;color:var(--sub1)}
+.neworder{background:var(--sub-ground);border-radius:24px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:24px}
+.ntxt{display:flex;flex-direction:column;gap:4px;text-align:center}
+.ntxt b{font-weight:600;font-size:18px;line-height:22px}
+.ntxt span{font-size:14px;line-height:18px}
+.nimg{width:70px;height:70px;border-radius:8px;background:center/cover no-repeat}
+.nbox{width:100%;display:flex;flex-direction:column;gap:16px}
+.nbox p{font-weight:600;font-size:10px;line-height:12px;color:var(--sub1);text-align:center}
 
 .fade-in{animation:fi .22s ease}
 @keyframes fi{from{opacity:.4}to{opacity:1}}
+@media (max-width:500px){
+  /* full-screen mode: no fake status bar / home indicator, real safe areas instead.
+     --dt / --db: how much shorter the top nav / bottom bar got */
+  :root{--dt:calc(44px - env(safe-area-inset-top,0px));--db:calc(35px - env(safe-area-inset-bottom,0px))}
+  .statusbar{display:none}
+  .topnav{padding-top:env(safe-area-inset-top,0px)}
+  .homeind{padding:0 0 env(safe-area-inset-bottom,0px)}
+  .homeind i{display:none}
+  .scroll{top:calc(0px - var(--dt));bottom:calc(0px - var(--db))}
+  .screen>.map,.screen>.zoom,.screen>.msheet{translate:0 calc(0px - var(--dt))}
+  .screen>.map.full{height:auto!important;bottom:calc(0px - var(--dt))}
+  .map.full .zoom{top:auto!important;bottom:calc(97px - var(--db))}
+  .bottombar.maptabs{top:auto!important;bottom:0!important;border-radius:0!important}
+  .snack{bottom:calc(159px - var(--db))}
 </style>
 <div class="stage">
   <div class="phone-wrap" id="wrap"><div class="phone" id="phone"></div></div>
@@ -369,11 +413,12 @@ function cartScreen(state){
       <div class="thumbs"><div class="thumb" ${bg('burger')}></div></div>
       <button class="soft" data-act="stores">${ic('storeBtn')}<span>Выбрать магазин</span></button>
     </div>`;
-    rest = `${separator}
+    // after the store change everything ships together — nothing is left in the cart
+    rest = state==='C' ? totals(true) : `${separator}
       <div class="block" style="align-items:center">${headline('preorder','Доставка 25 апреля','Привезем c 09:00 до 10:00','1  шт')}
-        ${state==='B'?productCard({...P.burger, faded:true}):''}
+        ${productCard({...P.burger, faded:true})}
         ${changeDate('25 апреля')}</div>
-      ${totals(state==='C')}`;
+      ${totals(false)}`;
   }
   const snackText = state==='B'?'Дата изменена на 24 апреля':state==='C'?'Магазин изменен':'';
   return `<div class="scroll"><div class="stack" style="padding:100px 0 181px">${bsBlock}${main}${service}${rest}</div></div>
@@ -400,7 +445,8 @@ const sthumb = (k) => `<div class="sthumb" ${bg(k)}><div class="chip">${ic('corn
 const sitem = (k, name, q) => `<div class="sitem">${sthumb(k)}<div class="tx"><p>${name}</p><span>${q}</span></div></div>`;
 const segs = (list) => [['Список',list,'stores'],['Карта',!list,'map']];
 function storesScreen(){
-  const st = (t,s,cnt,cls,warn,items='') => `<button class="store" data-act="map-select"><div class="shead"><div class="tg"><div class="t">${t}</div><div class="s ${warn?'warn':''}">${s}</div></div><div class="counter ${cls}">${cnt}</div></div>${items}</button>`;
+  let n = 0;
+  const st = (t,s,cnt,cls,warn,items='') => `<button class="store" data-act="map-select" data-store="${['rom','tim','len','van'][n++]}"><div class="shead"><div class="tg"><div class="t">${t}</div><div class="s ${warn?'warn':''}">${s}</div></div><div class="counter ${cls}">${cnt}</div></div>${items}</button>`;
   return `<div class="scroll"><div class="stack" style="padding:166px 0 93px">
     <div class="block"><div class="banner">${ic('danger24')}<span>Отметили товары, которые частично<br>или полностью отсутствуют в данном магазине</span></div></div>
     <div class="slist">
@@ -419,15 +465,93 @@ const zoom = (l,t) => `<div class="zoom" style="left:${l}px;top:${t}px"><button 
 const pinImg = (x,y,t,green,act='') => `<button class="pin" style="left:${x}px;top:${y}px" ${act?`data-act="${act}"`:''}><span class="cb ${green?'g':''}">${t}</span><span class="shopimg" ${bg('shop')}></span></button>`;
 const pinChk = (x,y,t,act='') => `<button class="pin" style="left:${x}px;top:${y}px" ${act?`data-act="${act}"`:''}><span class="cb">${t}</span><span class="chk">${ic('pinCheck')}</span></button>`;
 const storePin = (x,y) => `<div class="storepin" style="left:${x}px;top:${y}px"><div class="bx">${ic('pinStore')}</div><div class="st"></div></div>`;
-const mapTabs = `<div class="bottombar flat" style="top:727px;bottom:auto;border-radius:0 0 24px 24px">${tabs({active:'home',count:'13'})}</div>`;
+const mapTabs = `<div class="bottombar flat maptabs" style="top:727px;bottom:auto;border-radius:0 0 24px 24px">${tabs({active:'home',count:'13'})}</div>`;
+/* interactive map: Нижний Новгород, Молитовка — Resurses/map.webp as the base layer,
+   coordinates are image pixels [y, x] (CRS.Simple, y grows downwards) */
+const MAP_IMG = 'Resurses/map.webp', MAP_SIZE = 814;
+const px = (x,y) => [MAP_SIZE - y, x];
+const HAS_LEAFLET = typeof window.L !== 'undefined';
+const STORES = [
+  {id:'rom', t:'ул. Романтиков, 8', s:'0,9 км – доставка c 9:00 до 10:00', cnt:'5 из 5', cls:'green', ll:px(340,295), onMap:true, items:''},
+  {id:'tim', t:'ул. Тимирязево, 35', s:'Привезем сегодня c 21:00 до 22:00', cnt:'4 из 5', cls:'orange', ll:px(300,640), onMap:true, items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')},
+  {id:'len', t:'ул. пр, Ленина, 65', s:'2,4 км – доставка c 10:00 до 11:00, стоимость может измениться', cnt:'3 из 5', cls:'orange', ll:px(300,380), items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')+sitem('salami','Колбаса Салями Пряная сырокопчёная полусухая','400 из 600 г')},
+  {id:'van', t:'ул. Ванеева, 78', s:'6,3 км – доставка c 11:00 до 12:00, стоимость может измениться', cnt:'5 из 5', cls:'green', ll:px(275,690), items:''},
+];
+const CURRENT = {cnt:'4 из 5', ll:px(500,462)};
+let selectedStore = 'tim';
+const MAPS = {};
+const pinHtml = (st, sel) => sel
+  ? `<div class="storepin"><div class="bx">${ic('pinStore')}</div><div class="st"></div></div>`
+  : `<span class="pin"><span class="cb ${st.cls==='green'?'g':''}">${st.cnt}</span><span class="shopimg" ${bg('shop')}></span></span>`;
+function initMap(screenId){
+  const el = document.querySelector(`#s-${screenId} [data-lmap]`);
+  if(!el) return;
+  if(MAPS[screenId]){ MAPS[screenId].map.invalidateSize(); refreshMarkers(screenId); return; }
+  const sheet = screenId!=='map';
+  const bounds = [[0,0],[MAP_SIZE,MAP_SIZE]];
+  // the full map runs under the tab bar, so let the image end above the screen bottom
+  const pan = sheet ? bounds : [[-100,0],[MAP_SIZE,MAP_SIZE]];
+  const map = L.map(el, {crs:L.CRS.Simple, minZoom:-3, zoomControl:false, attributionControl:false, zoomSnap:.25, maxBounds:pan, maxBoundsViscosity:1});
+  L.imageOverlay(MAP_IMG, bounds).addTo(map);
+  // never zoom out past the point where the image stops covering the map
+  map.setMinZoom(map.getBoundsZoom(bounds, true)); map.setMaxZoom(1.5);
+  // same framing as the Figma frames: 1:1 on the full map, 1:2 above the sheet
+  map.setView(sheet?px(405,425):px(380,524), sheet?-1:0, {animate:false});
+  const cur = L.marker(CURRENT.ll, {icon:L.divIcon({className:'lpin', iconSize:[0,0], html:`<span class="pin chkpin"><span class="cb">${CURRENT.cnt}</span><span class="chk">${ic('pinCheck')}</span></span>`}), zIndexOffset:500}).addTo(map);
+  cur.on('click', ()=>go('mapCurrent'));
+  const markers = STORES.map(st=>{
+    const m = L.marker(st.ll).addTo(map);
+    m.on('click', ()=>{ selectedStore = st.id; go('mapSelect'); });
+    return [st, m];
+  });
+  MAPS[screenId] = {map, markers};
+  refreshMarkers(screenId);
+}
+function refreshMarkers(screenId){
+  const sel = screenId==='mapSelect' ? selectedStore : null;
+  MAPS[screenId].markers.forEach(([st,m])=>{
+    m.setIcon(L.divIcon({className:'lpin', iconSize:[0,0], html:pinHtml(st, st.id===sel)}));
+    // the design shows only some stores on the map; one picked from the list appears too
+    if(st.onMap || st.id===sel) m.addTo(MAPS[screenId].map); else m.remove();
+    m.setZIndexOffset(st.id===sel?1000:0);
+  });
+  const st = STORES.find(x=>x.id===(screenId==='mapCurrent'?'tim':selectedStore));
+  const sh = document.querySelector(`#s-${screenId} .msheet`);
+  if(sh && st){
+    sh.querySelector('.shead .t').textContent = st.t;
+    sh.querySelector('.shead .s').textContent = st.s;
+    const c = sh.querySelector('.shead .counter'); c.textContent = st.cnt; c.className = 'counter '+st.cls;
+    const items = typeof st.items==='function' ? st.items() : st.items;
+    sh.querySelector('[data-items]').innerHTML = items;
+    sh.querySelector('.banner').hidden = !items;
+  }
+  if(sel && !MAPS[screenId].map.getBounds().contains(st.ll)){ MAPS[screenId].map.panTo(st.ll, {animate:true}); }
+}
+const lmapZoom = (l,t) => `<div class="zoom" style="left:${l}px;top:${t}px"><button aria-label="Приблизить" data-zoom="1">${ic('plus20')}</button><button aria-label="Отдалить" data-zoom="-1">${ic('minus20')}</button></div>`;
 function mapScreen(){
-  return `<div class="map" style="height:692px"><div class="mimg" style="${IMG.mapBig?`background-image:url(${IMG.mapBig});`:''}inset:0"></div>
+  if(HAS_LEAFLET) return `<div class="map full" style="height:692px"><div class="lmap" data-lmap></div>${lmapZoom(319,507)}</div>
+    ${topnav({title:'Магазины', time:'9:41', round:true, pb:16, back:'cart', segmented:segs(false)})}
+    ${mapTabs}`;
+  return `<div class="map full" style="height:692px"><div class="mimg" style="${IMG.mapBig?`background-image:url(${IMG.mapBig});`:''}inset:0"></div>
       ${pinImg(60,56,'5 из 5',true,'map-select')}${pinImg(0,411,'2 из 5',false,'map-select')}${pinChk(239,276,'4 из 5','map-current')}
       ${zoom(319,507)}</div>
     ${topnav({title:'Магазины', time:'9:41', round:true, pb:16, back:'cart', segmented:segs(false)})}
     ${mapTabs}`;
 }
 function mapSheet(selected){
+  if(HAS_LEAFLET) return `<div class="map" style="height:321px"><div class="lmap" data-lmap></div></div>
+    ${lmapZoom(315,324)}
+    <div class="msheet" style="top:417px">
+      <div class="handle"><i></i></div>
+      <div class="sh">
+        <div class="shead lg" style="height:54px"><div class="tg"><div class="t"></div><div class="s"></div></div><div class="counter"></div></div>
+        <div class="banner gray">${ic('danger24')}<span>Товары, которые частично или полностью отсутствуют в данном магазине</span></div>
+        <div data-items style="display:flex;flex-direction:column;gap:16px"></div>
+        ${selected?`<button class="primary" data-act="apply-store">Выбрать заказа</button>`:`<button class="primary disabled" disabled>Выбран для заказа</button>`}
+      </div>
+    </div>
+    ${topnav({title:'Магазины', time:'9:41', round:true, pb:16, back:'cart', segmented:segs(false)})}
+    ${mapTabs}`;
   return `<div class="map" style="height:321px"><div class="mimg" style="${IMG.mapSmall?`background-image:url(${IMG.mapSmall});`:''}inset:0"></div>
       ${pinImg(76,65,'5 из 5',true)}
       ${selected?storePin(76,220):pinImg(64,251,'4 из 5',false,'map-select')}
@@ -473,7 +597,27 @@ function checkoutScreen(){
     </div>
   </div></div>
   ${topnav({title:'Оформление', round:true, pb:8, back:'back-from-checkout'})}
-  <div class="bottombar"><div class="btnpanel"><button class="primary">Оформить заказ</button></div>${tabs({})}</div>`;
+  <div class="bottombar"><div class="btnpanel"><button class="primary" data-act="finish">Оформить заказ</button></div>${tabs({})}</div>`;
+}
+
+/* ---------- FINISH ---------- */
+IMG.bag = 'Resurses/image%20113.png';
+function finishScreen(){
+  return `<div class="scroll"><div class="stack finish" style="padding:84px 16px 64px;gap:24px">
+    <div class="fhead">
+      <div class="bag" ${bg('bag')}></div>
+      <div class="ftxt"><h1>Ваш заказ №46295 принят</h1><p>Мы пришлем уведомление после сборки заказа. Вы можете оформить дозаказ до начала поиска курьера.</p></div>
+    </div>
+    <button class="soft" style="width:100%" data-act="noop">Перейти к заказу</button>
+    <div class="neworder">
+      <div class="ntxt"><b>В корзине остались товары</b><span>1 товар на 25 апреля. Настройки корзины изменятся на предзаказ.</span></div>
+      <div class="nimg" ${bg('cake')}></div>
+      <div class="nbox"><button class="primary" style="height:48px" data-act="checkout">Оформить предзаказ</button>
+        <p>Товары привезут отдельно. Акции и бонусы не суммируются с основным заказом. Доставка оплачивается отдельно</p></div>
+    </div>
+  </div></div>
+  <div class="topnav">${statusbar('9:41')}</div>
+  <div class="homeind" style="position:absolute;left:0;right:0;bottom:0;z-index:20"><i></i></div>`;
 }
 
 /* ---------- router ---------- */
@@ -487,9 +631,10 @@ const SCREENS = [
   ['mapSelect','Карта — выбор магазина', ()=>mapSheet(true)],
   ['cartC','Корзина — магазин изменён', ()=>cartScreen('C')],
   ['checkout','Оформление', checkoutScreen],
+  ['finish','Заказ принят', finishScreen],
 ];
 const phone = document.getElementById('phone');
-SCREENS.forEach(([id,,fn])=>{const d=document.createElement('section');d.className='screen'+(id.startsWith('map')?' white':'');d.id='s-'+id;d.innerHTML=fn();phone.appendChild(d);});
+SCREENS.forEach(([id,,fn])=>{const d=document.createElement('section');d.className='screen'+(id.startsWith('map')||id==='finish'?' white':'');d.id='s-'+id;d.innerHTML=fn();phone.appendChild(d);});
 let current='cartA', lastCart='cartA', snackTimer;
 function go(id, {snack=false}={}){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id==='s-'+id));
@@ -497,6 +642,7 @@ function go(id, {snack=false}={}){
   const sc=el.querySelector('.scroll'); if(sc) sc.scrollTop=0;
   if(id.startsWith('cart')) lastCart=id;
   current=id;
+  if(HAS_LEAFLET && id.startsWith('map')) initMap(id);
   document.querySelectorAll('#navpanel [data-go]').forEach(b=>b.classList.toggle('on', b.dataset.go===id));
   clearTimeout(snackTimer);
   document.querySelectorAll('[data-snack]').forEach(s=>s.classList.remove('show'));
@@ -505,11 +651,12 @@ function go(id, {snack=false}={}){
 const ACT = {
   'settings':()=>go('settings'), 'cart':()=>go(lastCart), 'apply-date':()=>go('cartB',{snack:true}),
   'revert':()=>go('cartA'), 'undo-B':()=>go('cartA'), 'undo-C':()=>go('cartB'),
-  'stores':()=>go('stores'), 'map':()=>go('map'), 'map-current':()=>go('mapCurrent'), 'map-select':()=>go('mapSelect'),
-  'apply-store':()=>go('cartC',{snack:true}), 'checkout':()=>go('checkout'), 'back-from-checkout':()=>go(lastCart), 'noop':()=>{}
+  'stores':()=>go('stores'), 'map':()=>go('map'), 'map-current':()=>go('mapCurrent'), 'map-select':(a)=>{if(a&&a.dataset.store)selectedStore=a.dataset.store;go('mapSelect');},
+  'apply-store':()=>go('cartC',{snack:true}), 'checkout':()=>go('checkout'), 'back-from-checkout':()=>go(lastCart), 'finish':()=>go('finish'), 'noop':()=>{}
 };
 phone.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act]'); if(a&&ACT[a.dataset.act]){ACT[a.dataset.act]();return;}
+  const z=e.target.closest('[data-zoom]'); if(z){const m=MAPS[current]; if(m) +z.dataset.zoom>0?m.map.zoomIn():m.map.zoomOut(); return;}
+  const a=e.target.closest('[data-act]'); if(a&&ACT[a.dataset.act]){ACT[a.dataset.act](a);return;}
   const t=e.target.closest('[data-toggle]'); if(t){t.classList.toggle('on');return;}
   const m=e.target.closest('[data-more]'); if(m){const pr=m.closest('[data-promo]');pr.classList.toggle('open');pr.querySelector('.extra-promo').hidden=!pr.classList.contains('open');return;}
   const sg=e.target.closest('[data-seg] button'); if(sg){sg.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===sg));return;}
@@ -520,7 +667,7 @@ const np=document.getElementById('navpanel');
 np.innerHTML='<h2>Экраны сценария</h2>'+SCREENS.map(([id,t],i)=>`<button data-go="${id}">${i+1}. ${t}</button>`).join('')+'<p>Нажимайте на кнопки в макете — переходы работают как в сценарии.</p>';
 np.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(b.dataset.go,{snack:b.dataset.go==='cartB'||b.dataset.go==='cartC'});});
 // fit phone into viewport on desktop
-function fit(){const w=document.getElementById('wrap');if(innerWidth<=500){w.style.transform='';return;}const s=Math.min(1,(innerHeight-32)/812);w.style.transform=`scale(${s})`;w.style.margin=`${(812*s-812)/2}px ${(375*s-375)/2}px`;}
+function fit(){const w=document.getElementById('wrap');if(innerWidth<=500){const s=innerWidth/375;w.style.width='375px';w.style.height=(innerHeight/s)+'px';w.style.transform=`scale(${s})`;Object.values(MAPS).forEach(m=>m.map.invalidateSize());return;}w.style.width=w.style.height='';const s=Math.min(1,(innerHeight-32)/812);w.style.transform=`scale(${s})`;w.style.margin=`${(812*s-812)/2}px ${(375*s-375)/2}px`;}
 addEventListener('resize',fit);fit();
 go('cartA');
 </script>
