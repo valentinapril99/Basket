@@ -2,6 +2,8 @@
 <title>Прототип корзины</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
   --main-text:#1E1E1E; --sub1:#4F4F4F; --sub2:#808080; --sub3:#BCBCBC;
@@ -205,6 +207,15 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 /* map */
 .map{position:absolute;left:0;top:120px;width:375px;overflow:hidden;background:#EEF0E8}
 .map .mimg{position:absolute;background:center/cover no-repeat}
+/* interactive map (Leaflet) */
+.lmap{position:absolute;inset:0;z-index:0;background:#EEF0E8;font:inherit}
+.lmap .leaflet-control-attribution{font-size:9px;line-height:12px;background:rgba(255,255,255,.7);color:var(--sub2)}
+.lmap .leaflet-control-attribution a{color:var(--sub1)}
+.lpin{background:none;border:0}
+.lpin .pin,.lpin .storepin{position:absolute;left:0;top:0;width:max-content}
+.lpin .pin{transform:translate(calc(-100% + 24px),-100%)}
+.lpin .pin.chkpin{transform:translate(calc(-100% + 20px),-50%)}
+.lpin .storepin{transform:translate(-50%,-100%)}
 .zoom{position:absolute;display:flex;flex-direction:column;gap:8px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.08)) drop-shadow(0 0 1px rgba(0,0,0,.04));color:var(--sub1);z-index:3}
 .zoom button{width:40px;height:40px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center}
 .pin{position:absolute;display:flex;align-items:center;z-index:2}
@@ -400,7 +411,8 @@ const sthumb = (k) => `<div class="sthumb" ${bg(k)}><div class="chip">${ic('corn
 const sitem = (k, name, q) => `<div class="sitem">${sthumb(k)}<div class="tx"><p>${name}</p><span>${q}</span></div></div>`;
 const segs = (list) => [['Список',list,'stores'],['Карта',!list,'map']];
 function storesScreen(){
-  const st = (t,s,cnt,cls,warn,items='') => `<button class="store" data-act="map-select"><div class="shead"><div class="tg"><div class="t">${t}</div><div class="s ${warn?'warn':''}">${s}</div></div><div class="counter ${cls}">${cnt}</div></div>${items}</button>`;
+  let n = 0;
+  const st = (t,s,cnt,cls,warn,items='') => `<button class="store" data-act="map-select" data-store="${['rom','tim','len','van'][n++]}"><div class="shead"><div class="tg"><div class="t">${t}</div><div class="s ${warn?'warn':''}">${s}</div></div><div class="counter ${cls}">${cnt}</div></div>${items}</button>`;
   return `<div class="scroll"><div class="stack" style="padding:166px 0 93px">
     <div class="block"><div class="banner">${ic('danger24')}<span>Отметили товары, которые частично<br>или полностью отсутствуют в данном магазине</span></div></div>
     <div class="slist">
@@ -420,7 +432,66 @@ const pinImg = (x,y,t,green,act='') => `<button class="pin" style="left:${x}px;t
 const pinChk = (x,y,t,act='') => `<button class="pin" style="left:${x}px;top:${y}px" ${act?`data-act="${act}"`:''}><span class="cb">${t}</span><span class="chk">${ic('pinCheck')}</span></button>`;
 const storePin = (x,y) => `<div class="storepin" style="left:${x}px;top:${y}px"><div class="bx">${ic('pinStore')}</div><div class="st"></div></div>`;
 const mapTabs = `<div class="bottombar flat" style="top:727px;bottom:auto;border-radius:0 0 24px 24px">${tabs({active:'home',count:'13'})}</div>`;
+/* interactive map: real coordinates (Нижний Новгород, Молитовка) */
+const HAS_LEAFLET = typeof window.L !== 'undefined';
+const STORES = [
+  {id:'rom', t:'ул. Романтиков, 8', s:'0,9 км – доставка c 9:00 до 10:00', cnt:'5 из 5', cls:'green', ll:[56.2953,43.9455], items:''},
+  {id:'tim', t:'ул. Тимирязево, 35', s:'Привезем сегодня c 21:00 до 22:00', cnt:'4 из 5', cls:'orange', ll:[56.2862,43.9585], items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')},
+  {id:'len', t:'ул. пр, Ленина, 65', s:'2,4 км – доставка c 10:00 до 11:00, стоимость может измениться', cnt:'3 из 5', cls:'orange', ll:[56.2898,43.9338], items:()=>sitem('tort','Торт бисквитно-ореховый Время волшебства','0 из 1 шт')+sitem('salami','Колбаса Салями Пряная сырокопчёная полусухая','400 из 600 г')},
+  {id:'van', t:'ул. Ванеева, 78', s:'6,3 км – доставка c 11:00 до 12:00, стоимость может измениться', cnt:'5 из 5', cls:'green', ll:[56.2815,43.9470], items:''},
+];
+const CURRENT = {cnt:'4 из 5', ll:[56.2905,43.9520]};
+let selectedStore = 'tim';
+const MAPS = {};
+const pinHtml = (st, sel) => sel
+  ? `<div class="storepin"><div class="bx">${ic('pinStore')}</div><div class="st"></div></div>`
+  : `<span class="pin"><span class="cb ${st.cls==='green'?'g':''}">${st.cnt}</span><span class="shopimg" ${bg('shop')}></span></span>`;
+function initMap(screenId){
+  const el = document.querySelector(`#s-${screenId} [data-lmap]`);
+  if(!el) return;
+  if(MAPS[screenId]){ MAPS[screenId].map.invalidateSize(); refreshMarkers(screenId); return; }
+  const sheet = screenId!=='map';
+  const map = L.map(el, {zoomControl:false, attributionControl:true, zoomSnap:.5});
+  // pins hang left/up from their point, the top nav overlaps the map top
+  map.fitBounds(L.latLngBounds([...STORES.map(x=>x.ll), CURRENT.ll]), {paddingTopLeft:[110, sheet?120:140], paddingBottomRight:[40, sheet?20:130]});
+  map.attributionControl.setPrefix(false).setPosition(sheet?'topright':'bottomleft');
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    subdomains:'abcd', maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
+  }).addTo(map);
+  const cur = L.marker(CURRENT.ll, {icon:L.divIcon({className:'lpin', iconSize:[0,0], html:`<span class="pin chkpin"><span class="cb">${CURRENT.cnt}</span><span class="chk">${ic('pinCheck')}</span></span>`}), zIndexOffset:500}).addTo(map);
+  cur.on('click', ()=>go('mapCurrent'));
+  const markers = STORES.map(st=>{
+    const m = L.marker(st.ll).addTo(map);
+    m.on('click', ()=>{ selectedStore = st.id; go('mapSelect'); });
+    return [st, m];
+  });
+  MAPS[screenId] = {map, markers};
+  refreshMarkers(screenId);
+}
+function refreshMarkers(screenId){
+  const sel = screenId==='mapSelect' ? selectedStore : null;
+  MAPS[screenId].markers.forEach(([st,m])=>{
+    m.setIcon(L.divIcon({className:'lpin', iconSize:[0,0], html:pinHtml(st, st.id===sel)}));
+    m.setZIndexOffset(st.id===sel?1000:0);
+  });
+  const st = STORES.find(x=>x.id===(screenId==='mapCurrent'?'tim':selectedStore));
+  const sh = document.querySelector(`#s-${screenId} .msheet`);
+  if(sh && st){
+    sh.querySelector('.shead .t').textContent = st.t;
+    sh.querySelector('.shead .s').textContent = st.s;
+    const c = sh.querySelector('.shead .counter'); c.textContent = st.cnt; c.className = 'counter '+st.cls;
+    const items = typeof st.items==='function' ? st.items() : st.items;
+    sh.querySelector('[data-items]').innerHTML = items;
+    sh.querySelector('.banner').hidden = !items;
+  }
+  if(sel){ MAPS[screenId].map.panTo(st.ll, {animate:true}); }
+}
+const lmapZoom = (l,t) => `<div class="zoom" style="left:${l}px;top:${t}px"><button aria-label="Приблизить" data-zoom="1">${ic('plus20')}</button><button aria-label="Отдалить" data-zoom="-1">${ic('minus20')}</button></div>`;
 function mapScreen(){
+  if(HAS_LEAFLET) return `<div class="map" style="height:692px"><div class="lmap" data-lmap></div>${lmapZoom(319,507)}</div>
+    ${topnav({title:'Магазины', time:'9:41', round:true, pb:16, back:'cart', segmented:segs(false)})}
+    ${mapTabs}`;
   return `<div class="map" style="height:692px"><div class="mimg" style="${IMG.mapBig?`background-image:url(${IMG.mapBig});`:''}inset:0"></div>
       ${pinImg(60,56,'5 из 5',true,'map-select')}${pinImg(0,411,'2 из 5',false,'map-select')}${pinChk(239,276,'4 из 5','map-current')}
       ${zoom(319,507)}</div>
@@ -428,6 +499,19 @@ function mapScreen(){
     ${mapTabs}`;
 }
 function mapSheet(selected){
+  if(HAS_LEAFLET) return `<div class="map" style="height:321px"><div class="lmap" data-lmap></div></div>
+    ${lmapZoom(315,324)}
+    <div class="msheet" style="top:417px">
+      <div class="handle"><i></i></div>
+      <div class="sh">
+        <div class="shead lg" style="height:54px"><div class="tg"><div class="t"></div><div class="s"></div></div><div class="counter"></div></div>
+        <div class="banner gray">${ic('danger24')}<span>Товары, которые частично или полностью отсутствуют в данном магазине</span></div>
+        <div data-items style="display:flex;flex-direction:column;gap:16px"></div>
+        ${selected?`<button class="primary" data-act="apply-store">Выбрать заказа</button>`:`<button class="primary disabled" disabled>Выбран для заказа</button>`}
+      </div>
+    </div>
+    ${topnav({title:'Магазины', time:'9:41', round:true, pb:16, back:'cart', segmented:segs(false)})}
+    ${mapTabs}`;
   return `<div class="map" style="height:321px"><div class="mimg" style="${IMG.mapSmall?`background-image:url(${IMG.mapSmall});`:''}inset:0"></div>
       ${pinImg(76,65,'5 из 5',true)}
       ${selected?storePin(76,220):pinImg(64,251,'4 из 5',false,'map-select')}
@@ -497,6 +581,7 @@ function go(id, {snack=false}={}){
   const sc=el.querySelector('.scroll'); if(sc) sc.scrollTop=0;
   if(id.startsWith('cart')) lastCart=id;
   current=id;
+  if(HAS_LEAFLET && id.startsWith('map')) initMap(id);
   document.querySelectorAll('#navpanel [data-go]').forEach(b=>b.classList.toggle('on', b.dataset.go===id));
   clearTimeout(snackTimer);
   document.querySelectorAll('[data-snack]').forEach(s=>s.classList.remove('show'));
@@ -505,11 +590,12 @@ function go(id, {snack=false}={}){
 const ACT = {
   'settings':()=>go('settings'), 'cart':()=>go(lastCart), 'apply-date':()=>go('cartB',{snack:true}),
   'revert':()=>go('cartA'), 'undo-B':()=>go('cartA'), 'undo-C':()=>go('cartB'),
-  'stores':()=>go('stores'), 'map':()=>go('map'), 'map-current':()=>go('mapCurrent'), 'map-select':()=>go('mapSelect'),
+  'stores':()=>go('stores'), 'map':()=>go('map'), 'map-current':()=>go('mapCurrent'), 'map-select':(a)=>{if(a&&a.dataset.store)selectedStore=a.dataset.store;go('mapSelect');},
   'apply-store':()=>go('cartC',{snack:true}), 'checkout':()=>go('checkout'), 'back-from-checkout':()=>go(lastCart), 'noop':()=>{}
 };
 phone.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act]'); if(a&&ACT[a.dataset.act]){ACT[a.dataset.act]();return;}
+  const z=e.target.closest('[data-zoom]'); if(z){const m=MAPS[current]; if(m) +z.dataset.zoom>0?m.map.zoomIn():m.map.zoomOut(); return;}
+  const a=e.target.closest('[data-act]'); if(a&&ACT[a.dataset.act]){ACT[a.dataset.act](a);return;}
   const t=e.target.closest('[data-toggle]'); if(t){t.classList.toggle('on');return;}
   const m=e.target.closest('[data-more]'); if(m){const pr=m.closest('[data-promo]');pr.classList.toggle('open');pr.querySelector('.extra-promo').hidden=!pr.classList.contains('open');return;}
   const sg=e.target.closest('[data-seg] button'); if(sg){sg.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===sg));return;}
