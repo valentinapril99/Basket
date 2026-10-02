@@ -1,5 +1,9 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Прототип корзины</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#FFFFFF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -33,7 +37,8 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 @media (max-width:760px){.nav-panel{display:none}}
 @media (max-width:500px){
   .stage{display:block}
-  .phone-wrap{width:100vw;height:100dvh;transform:none!important}
+  /* the 375px layout is scaled to the screen width in fit(); height follows the screen */
+  .phone-wrap{transform-origin:0 0;margin:0!important}
   .phone{width:100%;height:100%;border-radius:0;box-shadow:none}
 }
 
@@ -252,6 +257,20 @@ button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 
 .fade-in{animation:fi .22s ease}
 @keyframes fi{from{opacity:.4}to{opacity:1}}
+@media (max-width:500px){
+  /* full-screen mode: no fake status bar / home indicator, real safe areas instead.
+     --dt / --db: how much shorter the top nav / bottom bar got */
+  :root{--dt:calc(44px - env(safe-area-inset-top,0px));--db:calc(35px - env(safe-area-inset-bottom,0px))}
+  .statusbar{display:none}
+  .topnav{padding-top:env(safe-area-inset-top,0px)}
+  .homeind{padding:0 0 env(safe-area-inset-bottom,0px)}
+  .homeind i{display:none}
+  .scroll{top:calc(0px - var(--dt));bottom:calc(0px - var(--db))}
+  .screen>.map,.screen>.zoom,.screen>.msheet{translate:0 calc(0px - var(--dt))}
+  .screen>.map.full{height:auto!important;bottom:calc(0px - var(--dt))}
+  .map.full .zoom{top:auto!important;bottom:calc(97px - var(--db))}
+  .bottombar.maptabs{top:auto!important;bottom:0!important;border-radius:0!important}
+  .snack{bottom:calc(159px - var(--db))}
 </style>
 <div class="stage">
   <div class="phone-wrap" id="wrap"><div class="phone" id="phone"></div></div>
@@ -431,7 +450,7 @@ const zoom = (l,t) => `<div class="zoom" style="left:${l}px;top:${t}px"><button 
 const pinImg = (x,y,t,green,act='') => `<button class="pin" style="left:${x}px;top:${y}px" ${act?`data-act="${act}"`:''}><span class="cb ${green?'g':''}">${t}</span><span class="shopimg" ${bg('shop')}></span></button>`;
 const pinChk = (x,y,t,act='') => `<button class="pin" style="left:${x}px;top:${y}px" ${act?`data-act="${act}"`:''}><span class="cb">${t}</span><span class="chk">${ic('pinCheck')}</span></button>`;
 const storePin = (x,y) => `<div class="storepin" style="left:${x}px;top:${y}px"><div class="bx">${ic('pinStore')}</div><div class="st"></div></div>`;
-const mapTabs = `<div class="bottombar flat" style="top:727px;bottom:auto;border-radius:0 0 24px 24px">${tabs({active:'home',count:'13'})}</div>`;
+const mapTabs = `<div class="bottombar flat maptabs" style="top:727px;bottom:auto;border-radius:0 0 24px 24px">${tabs({active:'home',count:'13'})}</div>`;
 /* interactive map: real coordinates (Нижний Новгород, Молитовка) */
 const HAS_LEAFLET = typeof window.L !== 'undefined';
 const STORES = [
@@ -489,10 +508,10 @@ function refreshMarkers(screenId){
 }
 const lmapZoom = (l,t) => `<div class="zoom" style="left:${l}px;top:${t}px"><button aria-label="Приблизить" data-zoom="1">${ic('plus20')}</button><button aria-label="Отдалить" data-zoom="-1">${ic('minus20')}</button></div>`;
 function mapScreen(){
-  if(HAS_LEAFLET) return `<div class="map" style="height:692px"><div class="lmap" data-lmap></div>${lmapZoom(319,507)}</div>
+  if(HAS_LEAFLET) return `<div class="map full" style="height:692px"><div class="lmap" data-lmap></div>${lmapZoom(319,507)}</div>
     ${topnav({title:'Магазины', time:'9:41', round:true, pb:16, back:'cart', segmented:segs(false)})}
     ${mapTabs}`;
-  return `<div class="map" style="height:692px"><div class="mimg" style="${IMG.mapBig?`background-image:url(${IMG.mapBig});`:''}inset:0"></div>
+  return `<div class="map full" style="height:692px"><div class="mimg" style="${IMG.mapBig?`background-image:url(${IMG.mapBig});`:''}inset:0"></div>
       ${pinImg(60,56,'5 из 5',true,'map-select')}${pinImg(0,411,'2 из 5',false,'map-select')}${pinChk(239,276,'4 из 5','map-current')}
       ${zoom(319,507)}</div>
     ${topnav({title:'Магазины', time:'9:41', round:true, pb:16, back:'cart', segmented:segs(false)})}
@@ -606,7 +625,7 @@ const np=document.getElementById('navpanel');
 np.innerHTML='<h2>Экраны сценария</h2>'+SCREENS.map(([id,t],i)=>`<button data-go="${id}">${i+1}. ${t}</button>`).join('')+'<p>Нажимайте на кнопки в макете — переходы работают как в сценарии.</p>';
 np.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(b.dataset.go,{snack:b.dataset.go==='cartB'||b.dataset.go==='cartC'});});
 // fit phone into viewport on desktop
-function fit(){const w=document.getElementById('wrap');if(innerWidth<=500){w.style.transform='';return;}const s=Math.min(1,(innerHeight-32)/812);w.style.transform=`scale(${s})`;w.style.margin=`${(812*s-812)/2}px ${(375*s-375)/2}px`;}
+function fit(){const w=document.getElementById('wrap');if(innerWidth<=500){const s=innerWidth/375;w.style.width='375px';w.style.height=(innerHeight/s)+'px';w.style.transform=`scale(${s})`;Object.values(MAPS).forEach(m=>m.map.invalidateSize());return;}w.style.width=w.style.height='';const s=Math.min(1,(innerHeight-32)/812);w.style.transform=`scale(${s})`;w.style.margin=`${(812*s-812)/2}px ${(375*s-375)/2}px`;}
 addEventListener('resize',fit);fit();
 go('cartA');
 </script>
